@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+<style>
+
+text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+</style>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+  <svg width="960" height="880"></svg>
+  <script>
+  var svg = d3.select("svg"),
+      width = +svg.attr("width");
+
+  var format = d3.format(",d");
+
+  var color = d3.scaleOrdinal(d3.schemeCategory20c);
+
+  var pack = d3.pack()
+      .size([width, width])
+      .padding(1.5);
+
+  d3.json("../json/private.json", function(classes) {
+
+    var root = d3.hierarchy({children: classes.대화자목록})
+        .sum(function(d) { return d.감정성향; })
+        .each(function(d) {
+            d.id = d.data.대화자명;
+        });
+
+    var node = svg.selectAll(".node")
+      .data(pack(root).leaves())
+      .enter().append("g")
+        .attr("class", "node")
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+
+    node.append("circle")
+        .attr("id", function(d) { return d.id; })
+        .attr("r", function(d) { return d.r / 2; })
+        .style("fill", function(d) { return 'hotpink'; });
+
+    node.append("clipPath")
+        .attr("id", function(d) { return "clip-" + "d.감정성향"; })
+      .append("use")
+        .attr("xlink:href", function(d) { return "#" + "d.감정성향"; });
+
+    node.append("text")
+        .attr("clip-path", function(d) { return "url(#clip-" + d.감정성향 + ")"; })
+      .selectAll("tspan")
+      .data(function(d) { return [d] })
+      .enter().append("tspan")
+        .attr("x", 0)
+        .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 10; })
+        .attr('font-size', '1.5em')
+        .html(function(d) { return d.id + "\'s 감정 성향"; });
+
+    node.append("title")
+        .text(function(d) { return d.id + "\n" + format(d.id); });
+  });
+
+  </script>
+</body>
+</html>
