@@ -24,9 +24,13 @@
     }
 
     function draw(words) {
-        var color = d3.scale.linear()
+        /**var color = d3.scale.linear()
               .domain([0,1,2,3,4,5,6,10,15,20,100])
-              .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);
+              .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);**/
+
+          color = d3.scale.linear()
+                .domain([0,1,2,3,4,5,6,7,8,9,10])
+                .range(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99']);
 
         d3.select("body").append("svg")
                 .attr("width", 850)
@@ -40,7 +44,7 @@
                 .data(words)
                 .enter().append("text")
                 .style("font-size", function(d) { return d.size + "px"; })
-                .style("fill", function(d, i) { return color(i); })
+                .style("fill", function(d, i) { return color(i % 11); })
                 .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                 })
@@ -56,7 +60,7 @@
       return list;
     }
 
-    var url = '../json/private.json';
+    var url = '../json/satpgroup.json';
     var result_list = []
     d3.json(url, function(data){
         for(let elem of data.대화자목록){
