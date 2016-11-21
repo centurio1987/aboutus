@@ -23,7 +23,9 @@
 var width = 960,
     height = 500;
 
-var color = d3.scaleOrdinal(d3.schemeCategory20);
+var color = d3.scaleThreshold().
+domain([1,2,3,4,5,6,7,8,9,10]).
+range(['#7f0000','#b30000','#d7301f','#ef6548','#fc8d59','#74a9cf','#3690c0','#0570b0','#045a8d','#023858']);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -45,7 +47,7 @@ d3.json("../json/satpgroup.json", function(error, json) {
       .attr("stroke-width", function(d) { return d.value * 5; })
       .on("click", function(d){
         alert(json.대화자목록[d.source.index].대화자명 + "님과 "
-       + json.대화자목록[d.source.index].대화자명 + "님의 성향 유사도는"
+       + json.대화자목록[d.target.index].대화자명 + "님의 성향 유사도는"
        + parseInt(d.value * 100) + "입니다.")
       })
 
@@ -60,7 +62,7 @@ d3.json("../json/satpgroup.json", function(error, json) {
 
   node.append("circle")
       .attr("r", function(d){ return d.선톡개수})
-      .attr("fill", function(d){ return color(Math.random() % 21)})
+      .attr("fill", function(d){ return color(d.감정성향 / 10)})
 
   /** 이미지 추가
   node.append("image")

@@ -1,0 +1,189 @@
+<!Doctype html>
+<html>
+<haed>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <style>
+      body {
+          font-family:"Lucida Grande","Droid Sans",Arial,Helvetica,sans-serif;
+      }
+      .bld {
+          font-weight: bold;
+      }
+      .link {
+        /**stroke: #ccc;**/
+        stroke: #3e73c9;
+      }
+
+      .node text {
+        pointer-events: none;
+        font: 13px nanum-otf;
+      }
+  </style>
+</haed>
+<script>
+var selected_node = null;
+
+
+
+</script>
+<body>
+  <div>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="../javascripts/d3.layout.cloud.js"></script>
+    <script>
+    function generateWordCloud(doc_list){
+        d3.layout.cloud().size([800, 300])
+                .words(doc_list)
+                .rotate(0)
+                .fontSize(function(d) { return d.size; })
+                .on("end", draw)
+                .start();
+    }
+
+    function draw(words) {
+        /**var color = d3.scale.linear()
+              .domain([0,1,2,3,4,5,6,10,15,20,100])
+              .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);**/
+
+          color = d3.scaleThreshold()
+                .domain([0,1,2,3,4,5,6,7,8,9,10])
+                .range(['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99']);
+
+        d3.select("body").append("svg")
+                .attr("width", 850)
+                .attr("height", 350)
+                .attr("class", "wordcloud")
+                .append("g")
+                // without the transform, words words would get cutoff to the left and top, they would
+                // appear outside of the SVG area
+                .attr("transform", "translate(320,200)")
+                .selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", function(d) { return d.size + "px"; })
+                .style("fill", function(d, i) { return color(i % 11); })
+                .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .text(function(d) { return d.text; });
+    }
+    function generateList(elem){
+      var scale = 50;
+      var list = []
+      for(let item of elem.자주사용하는단어순위목록){
+        list.push({"text": item, "size": scale})
+        scale /= 2;
+      }
+      return list;
+    }
+
+    var url = '../json/satpgroup.json';
+    var result_list = []
+
+    function visualizeWordCloud(){
+      d3.json(url, function(data){
+        //alert(data.대화자목록[selected_node])
+          result_list = generateList(data.대화자목록[selected_node])
+          generateWordCloud(result_list);
+      })
+    }
+
+    </script>
+  </div>
+  <div>
+      <script src="https://d3js.org/d3.v4.min.js"></script>
+      <script>
+
+      var width = 960,
+          height = 500;
+
+      var color = d3.scaleThreshold().
+      domain([1,2,3,4,5,6,7,8,9,10]).
+      range(['#7f0000','#b30000','#d7301f','#ef6548','#fc8d59','#74a9cf','#3690c0','#0570b0','#045a8d','#023858']);
+
+      var svg = d3.select("body").append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+      d3.json("../json/satpgroup.json", function(error, json) {
+        if (error) throw error;
+
+        var force = d3.forceSimulation(json.대화자목록)
+            .force("link", d3.forceLink(json.단어성향관계).id(function(d) { return d.번호; }).distance(function(d){ return 200}))
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        var link = svg.selectAll(".link")
+            .data(json.단어성향관계)
+            .enter().append("line")
+            .attr("class", "link")
+            .attr("source", function(d){ return d.source })
+            .attr("stroke-width", function(d) { return d.value * 5; })
+            .on("click", function(d){
+              alert(json.대화자목록[d.source.index].대화자명 + "님과 "
+             + json.대화자목록[d.target.index].대화자명 + "님의 성향 유사도는"
+             + parseInt(d.value * 100) + "입니다.")
+            })
+
+        var node = svg.selectAll(".node")
+            .data(json.대화자목록)
+            .enter().append("g")
+            .attr("class", "node")
+            .on("click", function(d){
+              selected_node = d.번호;
+              visualizeWordCloud();
+            })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", function(d){ return d.선톡개수})
+            .attr("fill", function(d){ return color(d.감정성향 / 10)})
+
+        /** 이미지 추가
+        node.append("image")
+            .attr("xlink:href", "https://github.com/favicon.ico")
+            .attr("x", -8)
+            .attr("y", -8)
+            .attr("width", 16)
+            .attr("height", 16);
+            **/
+
+        node.append("text")
+            .attr("dx", "-1.25em")
+            .attr("dy", "2.75em")
+            .text(function(d) { return d.대화자명 });
+
+        force.on("tick", function() {
+          link.attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; });
+
+          node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        });
+
+        function dragstarted(d) {
+          if (!d3.event.active) force.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        }
+
+        function dragged(d) {
+          d.fx = d3.event.x;
+          d.fy = d3.event.y;
+        }
+
+        function dragended(d) {
+          if (!d3.event.active) force.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }
+      });
+
+      </script>
+  </div>
+</body>
+</html>
