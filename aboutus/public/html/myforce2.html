@@ -41,7 +41,13 @@ d3.json("../json/satpgroup.json", function(error, json) {
       .data(json.단어성향관계)
       .enter().append("line")
       .attr("class", "link")
-      .attr("stroke-width", function(d) { return d.value * 5; });
+      .attr("source", function(d){ return d.source })
+      .attr("stroke-width", function(d) { return d.value * 5; })
+      .on("click", function(d){
+        alert(json.대화자목록[d.source.index].대화자명 + "님과 "
+       + json.대화자목록[d.source.index].대화자명 + "님의 성향 유사도는"
+       + parseInt(d.value * 100) + "입니다.")
+      })
 
   var node = svg.selectAll(".node")
       .data(json.대화자목록)
@@ -96,8 +102,6 @@ d3.json("../json/satpgroup.json", function(error, json) {
     d.fy = null;
   }
 });
-
-
 
 </script>
 </body>
